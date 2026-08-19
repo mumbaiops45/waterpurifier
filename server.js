@@ -12,7 +12,7 @@ app.use(express.json());
 // app.use(cors());
 app.use(
     cors({
-        origin: "https://vrs-black.vercel.app",
+        origin: "https://waterpurifier-1.onrender.com",
         credentials: true,
     })
 );
