@@ -65,9 +65,9 @@ const deleteProduct = async (productId, userId) => {
     return true;
 };
 
-const getMyProducts = async (userId) => {
-    const products = (await Product.find({owner: userId})).toSorted({createdAt: -1});
 
+const getMyProducts = async (userId) => {
+    const products = await Product.find({owner: userId,});
     return products;
 };
 
