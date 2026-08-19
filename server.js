@@ -9,7 +9,13 @@ const productRoutes = require("./routes/product.route");
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
+app.use(
+    cors({
+        origin: "https://vrs-black.vercel.app",
+        credentials: true,
+    })
+);
 
 app.get("/", (req, res) => {
     res.json({
