@@ -70,13 +70,10 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.json());
 app.use(cookieParser());
 
-app.get("/", (req, res) => {
-  res.json({ message: "API is running" });
-});
+
 
 app.use("/auth", authRoutes);
 app.use("/product", productRoutes);
