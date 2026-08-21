@@ -1,9 +1,15 @@
 const Product = require("../models/Product");
+const {uploadImage , deleteImage} = require("./clodinary.service");
 
 
-const createProduct = async ({ image, name, description, price, owner }) => {
+const createProduct = async ({ imageBuffer, name, description, price, owner }) => {
+    const uploadedImage = await uploadImage(imageBuffer);
+
     const product = await Product.create({
-        image, name, description, price, owner,
+        image : {
+            url: uploadedImage.secure_url,
+            publicId: uploadedImage.public_id,
+        }, name, description, price, owner,
     });
     return product;
 };
@@ -23,27 +29,49 @@ const getProductById = async (productId) => {
     return product;
 };
 
-const updateProduct = async(productId , userId,updateData) => {
-    const product = await Product.findById(productId);
 
-    if(!product) {
-        throw new Error("Product not found");
-    }
+const updateProduct = async (productId, userId, updateData, imageBuffer = null) => {
+    const product = await Product.findById(productId).select("owner image");
 
-    if(product.owner.toString() !== userId.toString()){
-        const error = new Error("You are not allowed to update this product");
-
-        error.statusCode = 403;
-
+    if (!product) {
+        const error = new Error("Product not found");
+        error.statusCode = 404;
         throw error;
     }
 
-    const updateProduct = await Product.findByIdAndUpdate(productId , updateData, {
-        new: true,
-        runValidators: true,
-    });
+    if (product.owner.toString() !== userId.toString()) {
+        const error = new Error("You are not allowed to update this product");
+        error.statusCode = 403;
+        throw error;
+    }
 
-    return updateProduct;
+    const patch = { ...updateData };
+    let staleImageId = null;
+
+    if (imageBuffer) {
+        const uploaded = await uploadImage(imageBuffer);
+        patch.image = { url: uploaded.secure_url, publicId: uploaded.public_id };
+        staleImageId = product.image?.publicId || null;
+    }
+
+    if (Object.keys(patch).length === 0) {
+        const error = new Error("Nothing to update");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const updated = await Product.findByIdAndUpdate(
+        productId,
+        { $set: patch },
+        { new: true, runValidators: true }
+    );
+    if (staleImageId) {
+        deleteImage(staleImageId).catch((err) =>
+            console.error("Cloudinary cleanup failed:", staleImageId, err.message)
+        );
+    }
+
+    return updated;
 };
 
 const deleteProduct = async (productId, userId) => {

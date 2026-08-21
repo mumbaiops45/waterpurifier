@@ -8,9 +8,16 @@ const authRoutes = require("./routes/auth.route");
 const productRoutes = require("./routes/product.route");
 const cartRoutes = require("./routes/cart.route");
 
+
+
+
+
+
 const app = express();
 
 app.set("trust proxy", 1);
+
+
 
 const allowedOrigins = [
   "http://localhost:3000",

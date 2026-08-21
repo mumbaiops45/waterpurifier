@@ -2,16 +2,23 @@ const productService = require("../service/product.service");
 
 const createProduct = async (req, res) => {
     try {
-        const { image, name, description, price } = req.body;
+        const {  name, description, price } = req.body;
 
-        if (!image || !name || !description || price === undefined) {
+        if(!req.file) {
+            return res.status(400).json({
+                message: "Product image is required",
+            });
+        }
+
+        if (!name || !description || price === undefined) {
             return res.status(400).json({
                 message: "Image, name, description and price are required",
             });
         }
 
         const product = await productService.createProduct({
-            image, name, description, price, owner: req.user.id,
+            imageBuffer: req.file.buffer
+            , name, description, price, owner: req.user.id,
         });
 
         return res.status(201).json({
@@ -55,40 +62,37 @@ const getProductById = async (req, res) => {
 };
 
 
+
 const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
+        const { name, description, price } = req.body;
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (price !== undefined) {
+            const numeric = Number(price);
+            if (Number.isNaN(numeric) || numeric <= 0) {
+                return res.status(400).json({ message: "Price must be a number greater than 0" });
+            }
+            updateData.price = numeric;
+        }
 
-        const {
-            image,
-            name,
-            description,
-            price,
-        } = req.body;
-
-        const updatedProduct =
-            await productService.updateProduct(
-                id,
-                req.user.id,
-                {
-                    image,
-                    name,
-                    description,
-                    price,
-                }
-            );
+        const updatedProduct = await productService.updateProduct(
+            id,
+            req.user.id,
+            updateData,
+            req.file?.buffer || null
+        );
 
         return res.status(200).json({
             message: "Product updated successfully",
             product: updatedProduct,
         });
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
-            message: error.message,
-        });
+        return res.status(error.statusCode || 500).json({ message: error.message });
     }
 };
-
 
 const deleteProduct = async (req, res) => {
     try {

@@ -35,20 +35,13 @@ const addToCart = async (userId, productId) => {
         return await cart.populate("items.product");
     }
 
-    cart.items.push({
-        product: productId,
-        quantity: 1,
-    });
-
+    cart.items.push({product: productId,quantity: 1});
     await cart.save();
-
     return await cart.populate("items.product");
 };
 
 const getCart = async (userId) => {
-    const cart = await Cart.findOne({
-        user: userId,
-    }).populate("items.product");
+    const cart = await Cart.findOne({user: userId}).populate("items.product");
 
     if (!cart) {
         return {
@@ -56,7 +49,6 @@ const getCart = async (userId) => {
             items: [],
         };
     }
-
     return cart;
 };
 
